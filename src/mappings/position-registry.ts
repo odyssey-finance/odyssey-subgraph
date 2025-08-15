@@ -1,4 +1,4 @@
-import { Address } from '@graphprotocol/graph-ts'
+import { Address, BigInt } from '@graphprotocol/graph-ts'
 import {
   OwnershipTransferred,
   PositionDeployed as PositionDeployedEvent,
@@ -13,24 +13,27 @@ import { PositionRegistry, Position, Strategy, SmartAccount } from '../../genera
 import { Position as PositionTemplate } from '../../generated/templates'
 import { ADDRESS_ZERO, BIG_DECIMAL_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
 
-export function loadOrCreateSmartAccount(id: Address): SmartAccount {
+function loadOrCreateSmartAccount(id: Address, timestamp: BigInt): SmartAccount {
   let smartAccount = SmartAccount.load(id)
   if (!smartAccount) {
     smartAccount = new SmartAccount(id)
     smartAccount.positionCount = BIG_INT_ZERO
-    smartAccount.positionRegistry = ADDRESS_ZERO // set default value
+    smartAccount.positionRegistry = ADDRESS_ZERO
+    smartAccount.totalDepositedUSD = BIG_DECIMAL_ZERO
+    smartAccount.updatedAt = timestamp
     smartAccount.save()
   }
   return smartAccount
 }
 
 export function handlePositionDeployed(event: PositionDeployedEvent): void {
+  const timestamp = event.block.timestamp
   // at this point we know that positionRegistry is initialized
   const registry = PositionRegistry.load(event.address)!
+  registry.updatedAt = timestamp
 
-  // create smartAccount entity if smartAccount is deployed before startBlock.
-  // load smartAccount entity, Set PositionRegistry, this update mark smartAccount as Odyssey smartAccount.
-  const smartAccount = loadOrCreateSmartAccount(event.params.owner)
+  // Set PositionRegistry in SmartAccount. This update mark smartAccount as Odyssey smartAccount.
+  const smartAccount = loadOrCreateSmartAccount(event.params.owner, timestamp)
   if (smartAccount.positionRegistry == ADDRESS_ZERO) {
     smartAccount.positionRegistry = registry.id
     registry.smartAccountCount = registry.smartAccountCount.plus(BIG_INT_ONE)
@@ -40,17 +43,22 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   const position = new Position(event.params.position)
   position.owner = smartAccount.id
   position.strategyId = event.params.strategyId
-  position.createdAt = event.block.timestamp
+  position.createdAt = timestamp
+  position.updatedAt = timestamp
   position.openedAt = BIG_INT_ZERO
   position.closedAt = BIG_INT_ZERO
   position.txCount = BIG_INT_ZERO
   position.totalAllocated = BIG_INT_ZERO
   position.totalDeposited = BIG_INT_ZERO
   position.totalDepositedUSD = BIG_DECIMAL_ZERO
+  position.totalBorrowed = BIG_INT_ZERO
+  position.totalBorrowedUSD = BIG_DECIMAL_ZERO
   position.pricePerShare = BIG_INT_ZERO
   position.asset = ADDRESS_ZERO
+  position.borrowToken = ADDRESS_ZERO
   position.isOutdated = false
 
+  smartAccount.updatedAt = timestamp
   smartAccount.positionCount = smartAccount.positionCount.plus(BIG_INT_ONE)
 
   registry.positionCount = registry.positionCount.plus(BIG_INT_ONE)
@@ -101,14 +109,17 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {
     positionRegistry.feeCollector = PositionRegistryContract.bind(event.address).feeCollector()
     positionRegistry.positionCount = BIG_INT_ZERO
     positionRegistry.smartAccountCount = BIG_INT_ZERO
+    positionRegistry.totalDepositedUSD = BIG_DECIMAL_ZERO
   }
   // update the owner
   positionRegistry.owner = event.params.newOwner
+  positionRegistry.updatedAt = event.block.timestamp
   positionRegistry.save()
 }
 
 export function handleFeeCollectorUpdated(event: FeeCollectorUpdated): void {
-  const registry = PositionRegistry.load(event.address)!
-  registry.feeCollector = event.params.newFeeCollector
-  registry.save()
+  const positionRegistry = PositionRegistry.load(event.address)!
+  positionRegistry.feeCollector = event.params.newFeeCollector
+  positionRegistry.updatedAt = event.block.timestamp
+  positionRegistry.save()
 }
