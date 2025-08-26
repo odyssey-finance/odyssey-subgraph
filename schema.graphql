@@ -1,10 +1,14 @@
 type PositionRegistry @entity {
   # position registry address
   id: Bytes!
+  # timestamp when data was updated
+  updatedAt: BigInt!
   # current owner of PositionRegistry
   owner: Bytes!
   # fee collector address
   feeCollector: Bytes!
+  # total deposited in USD
+  totalDepositedUSD: BigDecimal!
   # number of positions created
   positionCount: BigInt!
   # number of smart accounts created
@@ -26,6 +30,8 @@ type Position @entity {
   strategyId: BigInt!
   # timestamp when position was created
   createdAt: BigInt!
+  # timestamp when position was updated
+  updatedAt: BigInt!
   # timestamp when position was opened and assets are deposited
   openedAt: BigInt!
   # timestamp when position was closed
@@ -41,9 +47,11 @@ type Position @entity {
   # USD representation of totalDeposited
   totalDepositedUSD: BigDecimal!
   # Optional: borrow token address.
-  borrowToken: Bytes
+  borrowToken: Bytes!
   # Optional: total assets borrowed by this position.
-  totalBorrowed: BigInt
+  totalBorrowed: BigInt!
+  # Optional: USD representation of totalBorrowed
+  totalBorrowedUSD: BigDecimal!
   # price per share
   pricePerShare: BigInt!
   # whether position implementation is outdated
@@ -70,6 +78,10 @@ type SmartAccount @entity {
   id: Bytes!
   # position registry address
   positionRegistry: PositionRegistry!
+  # timestamp when data was updated
+  updatedAt: BigInt!
+  # total deposited in USD
+  totalDepositedUSD: BigDecimal!
   # total position of this smart account
   positionCount: BigInt!
   # positions of this smart account
@@ -80,8 +92,8 @@ type SmartAccount @entity {
 
 type PositionRegistryDailyData @entity {
   id: String!
-  dayStartTimestamp: Int!
-  blockTimestamp: BigInt!
+  dayStartTimestamp: BigInt!
+  createdAt: BigInt!
   totalDepositedUSD: BigDecimal!
   positionCount: BigInt!
   smartAccountCount: BigInt!
@@ -90,18 +102,20 @@ type PositionRegistryDailyData @entity {
 
 type SmartAccountDailyData @entity {
   id: String!
-  dayStartTimestamp: Int!
-  blockTimestamp: BigInt!
+  dayStartTimestamp: BigInt!
+  createdAt: BigInt!
   totalDepositedUSD: BigDecimal!
   smartAccount: SmartAccount!
 }
 
 type PositionDailyData @entity {
   id: String!
-  dayStartTimestamp: Int!
-  blockTimestamp: BigInt!
+  dayStartTimestamp: BigInt!
+  createdAt: BigInt!
   totalDeposited: BigInt!
   totalDepositedUSD: BigDecimal!
+  totalBorrowed: BigInt!
+  totalBorrowedUSD: BigDecimal!
   pricePerShare: BigInt!
   position: Position!
 }
