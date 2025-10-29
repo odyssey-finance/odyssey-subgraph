@@ -12,6 +12,7 @@ NC='\033[0m' # No Color
 
 NETWORK=""
 DEPLOY_FLAG=""
+VERSION=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,17 +24,40 @@ while [[ $# -gt 0 ]]; do
         DEPLOY_FLAG="--deploy"
         shift
         ;;
+    --version)
+        VERSION="$2"
+        shift 2
+        ;;
     *)
-        echo -e "${YELLOW}Usage: $0 --network [network_name] [--deploy]${NC}"
+        echo -e "${YELLOW}Usage: $0 --network <network_name> [--deploy] [--version <x.y.z>]${NC}"
         exit 1
         ;;
     esac
 done
 
 if [[ -z "$NETWORK" ]]; then
-    echo -e "${YELLOW}Usage: $0 --network [network_name] [--deploy]${NC}"
+    echo -e "${YELLOW}Usage: $0 --network <network_name> [--deploy] [--version <x.y.z>]${NC}"
     exit 1
 fi
+
+# Check version if deploying
+if [[ "$DEPLOY_FLAG" == "--deploy" ]]; then
+    if [[ -z "$VERSION" ]]; then
+        echo -e "${RED}Error: --version is required for deployment${NC}"
+        echo -e "${YELLOW}Usage: $0 --network <network_name> --deploy --version x.y.z${NC}"
+        exit 1
+    fi
+    
+    # Validate semver format inline
+    if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo -e "${RED}Error: Version must follow semantic versioning format (MAJOR.MINOR.PATCH)${NC}"
+        echo -e "${YELLOW}Example: 1.2.3${NC}"
+        exit 1
+    fi
+fi
+
+# Construct subgraph name
+SUBGRAPH_NAME="odyssey-subgraph-${NETWORK}"
 
 # Dynamically get valid networks from config directory
 VALID_NETWORKS=($(ls -1 config | grep -v '^[.]*$'))
@@ -62,9 +86,20 @@ graph codegen
 
 # deploy subgraph
 if [[ "$DEPLOY_FLAG" == "--deploy" ]]; then
-    echo -e "${CYAN}Deploying subgraph...${NC}"
-    graph deploy --node https://api.studio.thegraph.com/deploy/
-    echo -e "\n${GREEN}Deploy for ${PURPLE}$NETWORK ${GREEN}completed.${NC}\n"
+    if [[ "$NETWORK" == "plasma" ]]; then
+        # build
+        graph build
+        # deploy
+        echo -e "${CYAN}Deploying ${PURPLE}${SUBGRAPH_NAME}${CYAN} to GoldSky...${NC}"
+        goldsky subgraph deploy "$SUBGRAPH_NAME/$VERSION" --path .
+    else 
+        echo -e "${CYAN}Deploying ${PURPLE}${SUBGRAPH_NAME}${CYAN} to TheGraph...${NC}"
+        # deploy command will build and deploy
+        graph deploy --node https://api.studio.thegraph.com/deploy/ \
+             ${SUBGRAPH_NAME} \
+             --version-label ${VERSION}
+    fi
+    echo -e "\n${GREEN}Deploy for ${PURPLE}$NETWORK ${GREEN}completed with version ${PURPLE}${VERSION}${GREEN}.${NC}\n"
 else
     # build subgraph
     echo -e "${CYAN}Building subgraph...${NC}"
