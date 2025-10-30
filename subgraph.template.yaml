@@ -60,6 +60,8 @@ templates:
           file: ./abis/Position.json
         - name: MasterOracle
           file: ./abis/MasterOracle.json
+        - name: ChainlinkOracle
+          file: ./abis/ChainlinkOracle.json
       eventHandlers:
         - event: PositionOpened(indexed address,uint256)
           handler: handlePositionOpened
