@@ -11,7 +11,7 @@ Below command will automatically generate the `subgraph.yaml` file and build the
 * `yarn build --network <networkName>`
   For example: `yarn build --network ethereum`
 
-> Supported networks: `base`, `ethereum`, and `optimism`.
+> Supported networks: `base`, `ethereum`, `optimism`, and `plasma`.
 
 ## Deploy
 Follow deployment guide [here](https://thegraph.com/docs/en/subgraphs/developing/deploying/using-subgraph-studio/) to understand the process of deployment.

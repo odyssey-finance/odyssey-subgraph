@@ -1,0 +1,6 @@
+{
+    "_comment": "Network is set to 'plasma-mainnet'. NOTE: for the rest of the project we use the 'plasma' as network",
+    "network": "plasma-mainnet",
+    "positionRegistry": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
+    "startBlock": 3705744
+}
