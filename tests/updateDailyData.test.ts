@@ -4,6 +4,7 @@ import { BigInt } from '@graphprotocol/graph-ts'
 import { POSITION_ADDRESS } from './utils/addresses'
 import { openPosition } from './utils/setup'
 import { createDailyData } from '../src/processor/daily-data-processor'
+import { Position } from '../generated/schema'
 
 describe('Daily Data: polling block handler', () => {
   afterAll(() => {
@@ -19,7 +20,9 @@ describe('Daily Data: polling block handler', () => {
     const pricePerShare = BigInt.fromI32(121)
     const isOutdated = true
     openPosition(totalAllocated, pricePerShare, isOutdated)
-    createDailyData(newMockEvent().block.timestamp)
+
+    const position = Position.load(POSITION_ADDRESS)!
+    createDailyData(position, newMockEvent().block.timestamp)
 
     assert.entityCount(entityType, 1)
     // given borrow is zero, totalDeposited is same as totalAllocated for this test.

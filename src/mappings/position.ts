@@ -22,7 +22,7 @@ export function handlePositionOpened(event: PositionOpened): void {
 
   position.save()
 
-  createDailyData(event.block.timestamp)
+  createDailyData(position, event.block.timestamp)
 }
 
 export function handlePositionClosed(event: PositionClosed): void {
@@ -42,7 +42,7 @@ export function handlePositionClosed(event: PositionClosed): void {
 
   position.save()
 
-  createDailyData(event.block.timestamp)
+  createDailyData(position, event.block.timestamp)
 }
 
 export function handleFeatureCalled(event: FeatureCalled): void {
@@ -58,5 +58,5 @@ export function handleFeatureCalled(event: FeatureCalled): void {
   position.updatedAt = event.block.timestamp
   position.save()
 
-  createDailyData(event.block.timestamp)
+  createDailyData(position, event.block.timestamp)
 }
