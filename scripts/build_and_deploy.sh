@@ -57,7 +57,11 @@ if [[ "$DEPLOY_FLAG" == "--deploy" ]]; then
 fi
 
 # Construct subgraph name
-SUBGRAPH_NAME="odyssey-subgraph-${NETWORK}"
+if [[ "$NETWORK" == "ethereum" ]]; then
+    SUBGRAPH_NAME="odyssey-subgraph-eth"
+else
+    SUBGRAPH_NAME="odyssey-subgraph-${NETWORK}"
+fi
 
 # Dynamically get valid networks from config directory
 VALID_NETWORKS=($(ls -1 config | grep -v '^[.]*$'))
