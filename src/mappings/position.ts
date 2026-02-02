@@ -1,9 +1,8 @@
 import { PositionOpened, PositionClosed, FeatureCalled } from '../../generated/templates/Position/Position'
 import { Position } from '../../generated/schema'
-import { ADDRESS_ZERO, BIG_DECIMAL_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
 import { PositionInfo } from '../utils/position-info'
-import { updateData } from '../processor/data-processor'
-import { quoteTokenToUsd } from '../utils/oracle'
+import { createDailyData } from '../processor/daily-data-processor'
 
 export function handlePositionOpened(event: PositionOpened): void {
   const position = Position.load(event.address)!
@@ -18,14 +17,12 @@ export function handlePositionOpened(event: PositionOpened): void {
   position.borrowToken = info.borrowToken()
   position.pricePerShare = info.pricePerShare()
   position.totalDeposited = info.totalDeposited()
-  position.totalDepositedUSD = quoteTokenToUsd(position.asset, position.totalDeposited)
   position.totalBorrowed = info.totalBorrowed()
-  position.totalBorrowedUSD = quoteTokenToUsd(position.borrowToken, position.totalBorrowed)
   position.isOutdated = info.isOutdated()
 
   position.save()
 
-  updateData(event.block.timestamp)
+  createDailyData(event.block.timestamp)
 }
 
 export function handlePositionClosed(event: PositionClosed): void {
@@ -38,16 +35,14 @@ export function handlePositionClosed(event: PositionClosed): void {
   position.borrowToken = ADDRESS_ZERO
   position.pricePerShare = BIG_INT_ZERO
   position.totalDeposited = BIG_INT_ZERO
-  position.totalDepositedUSD = BIG_DECIMAL_ZERO
   position.totalBorrowed = BIG_INT_ZERO
-  position.totalBorrowedUSD = BIG_DECIMAL_ZERO
 
   const info = new PositionInfo(event.address)
   position.isOutdated = info.isOutdated()
 
   position.save()
 
-  updateData(event.block.timestamp)
+  createDailyData(event.block.timestamp)
 }
 
 export function handleFeatureCalled(event: FeatureCalled): void {
@@ -58,12 +53,10 @@ export function handleFeatureCalled(event: FeatureCalled): void {
   const info = new PositionInfo(event.address)
   position.pricePerShare = info.pricePerShare()
   position.totalDeposited = info.totalDeposited()
-  position.totalDepositedUSD = quoteTokenToUsd(position.asset, position.totalDeposited)
   position.totalBorrowed = info.totalBorrowed()
-  position.totalBorrowedUSD = quoteTokenToUsd(position.borrowToken, position.totalBorrowed)
   position.isOutdated = info.isOutdated()
   position.updatedAt = event.block.timestamp
   position.save()
 
-  updateData(event.block.timestamp)
+  createDailyData(event.block.timestamp)
 }

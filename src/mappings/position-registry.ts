@@ -11,7 +11,7 @@ import {
 } from '../../generated/PositionRegistry/PositionRegistry'
 import { PositionRegistry, Position, Strategy, SmartAccount } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
-import { ADDRESS_ZERO, BIG_DECIMAL_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
 
 function loadOrCreateSmartAccount(id: Address, timestamp: BigInt): SmartAccount {
   let smartAccount = SmartAccount.load(id)
@@ -19,7 +19,6 @@ function loadOrCreateSmartAccount(id: Address, timestamp: BigInt): SmartAccount 
     smartAccount = new SmartAccount(id)
     smartAccount.positionCount = BIG_INT_ZERO
     smartAccount.positionRegistry = ADDRESS_ZERO
-    smartAccount.totalDepositedUSD = BIG_DECIMAL_ZERO
     smartAccount.updatedAt = timestamp
     smartAccount.save()
   }
@@ -50,9 +49,7 @@ export function handlePositionDeployed(event: PositionDeployedEvent): void {
   position.txCount = BIG_INT_ZERO
   position.totalAllocated = BIG_INT_ZERO
   position.totalDeposited = BIG_INT_ZERO
-  position.totalDepositedUSD = BIG_DECIMAL_ZERO
   position.totalBorrowed = BIG_INT_ZERO
-  position.totalBorrowedUSD = BIG_DECIMAL_ZERO
   position.pricePerShare = BIG_INT_ZERO
   position.asset = ADDRESS_ZERO
   position.borrowToken = ADDRESS_ZERO
@@ -109,7 +106,6 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {
     positionRegistry.feeCollector = PositionRegistryContract.bind(event.address).feeCollector()
     positionRegistry.positionCount = BIG_INT_ZERO
     positionRegistry.smartAccountCount = BIG_INT_ZERO
-    positionRegistry.totalDepositedUSD = BIG_DECIMAL_ZERO
   }
   // update the owner
   positionRegistry.owner = event.params.newOwner
