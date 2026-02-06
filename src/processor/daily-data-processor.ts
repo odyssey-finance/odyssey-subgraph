@@ -1,4 +1,4 @@
-import { BigInt } from '@graphprotocol/graph-ts'
+import { Bytes, BigInt } from '@graphprotocol/graph-ts'
 import {
   Position,
   PositionDailyData,
@@ -7,32 +7,31 @@ import {
   SmartAccount,
   SmartAccountDailyData,
 } from '../../generated/schema'
-import { BIG_DECIMAL_ZERO } from '../utils/constants'
-import { quoteTokenToUsd } from '../utils/oracle'
-import { getDailyDataId, isPositionEligibleForUpdate } from '../utils/data-utils'
+import { POSITION_REGISTRY } from '../utils/address'
+import { SECONDS_PER_DAY } from '../utils/constants'
 
-function loadOrCreateRegistryDailyData(
+function getDailyDataId(entityId: Bytes, dayId: BigInt): string {
+  return entityId.toHex().concat('-').concat(dayId.toString())
+}
+
+function saveRegistryDailyData(
   positionRegistry: PositionRegistry,
   blockTimestamp: BigInt,
   dayId: BigInt,
   dayStartTimestamp: BigInt,
 ): PositionRegistryDailyData {
   const dailyDataId = getDailyDataId(positionRegistry.id, dayId)
-  let dailyData = PositionRegistryDailyData.load(dailyDataId)
-  if (!dailyData) {
-    dailyData = new PositionRegistryDailyData(dailyDataId)
-    dailyData.dayStartTimestamp = dayStartTimestamp
-    dailyData.createdAt = blockTimestamp
-    dailyData.positionCount = positionRegistry.positionCount
-    dailyData.smartAccountCount = positionRegistry.smartAccountCount
-    dailyData.totalDepositedUSD = BIG_DECIMAL_ZERO
-    dailyData.positionRegistry = positionRegistry.id
-    dailyData.save()
-  }
+  const dailyData = new PositionRegistryDailyData(dailyDataId)
+  dailyData.dayStartTimestamp = dayStartTimestamp
+  dailyData.createdAt = blockTimestamp
+  dailyData.positionCount = positionRegistry.positionCount
+  dailyData.smartAccountCount = positionRegistry.smartAccountCount
+  dailyData.positionRegistry = positionRegistry.id
+  dailyData.save()
   return dailyData
 }
 
-function loadOrCreateSmartAccountDailyData(
+function saveSmartAccountDailyData(
   smartAccount: SmartAccount,
   blockTimestamp: BigInt,
   dayId: BigInt,
@@ -40,105 +39,86 @@ function loadOrCreateSmartAccountDailyData(
 ): SmartAccountDailyData {
   const dailyDataId = getDailyDataId(smartAccount.id, dayId)
   let dailyData = SmartAccountDailyData.load(dailyDataId)
-  if (!dailyData) {
-    dailyData = new SmartAccountDailyData(dailyDataId)
-    dailyData.dayStartTimestamp = dayStartTimestamp
-    dailyData.createdAt = blockTimestamp
-    dailyData.totalDepositedUSD = BIG_DECIMAL_ZERO
-    dailyData.smartAccount = smartAccount.id
-    dailyData.save()
-  }
+  if (dailyData) return dailyData
+
+  dailyData = new SmartAccountDailyData(dailyDataId)
+  dailyData.dayStartTimestamp = dayStartTimestamp
+  dailyData.createdAt = blockTimestamp
+  dailyData.smartAccount = smartAccount.id
+  dailyData.save()
   return dailyData
 }
 
-function updatePositionDailyData(
+function savePositionDailyData(
   position: Position,
   blockTimestamp: BigInt,
   dayId: BigInt,
   dayStartTimestamp: BigInt,
-): PositionDailyData | null {
-  if (!isPositionEligibleForUpdate(position)) return null
-
+): PositionDailyData {
   const dailyDataId = getDailyDataId(position.id, dayId)
+  let dailyData = PositionDailyData.load(dailyDataId)
 
-  let positionDailyData = PositionDailyData.load(dailyDataId)
-  if (!positionDailyData) {
-    positionDailyData = new PositionDailyData(dailyDataId)
-    positionDailyData.dayStartTimestamp = dayStartTimestamp
-    positionDailyData.createdAt = blockTimestamp
-    positionDailyData.pricePerShare = position.pricePerShare
-    positionDailyData.totalDeposited = position.totalDeposited
-    positionDailyData.totalBorrowed = position.totalBorrowed
-    if (blockTimestamp == position.updatedAt) {
-      positionDailyData.totalDepositedUSD = position.totalDepositedUSD
-      positionDailyData.totalBorrowedUSD = position.totalBorrowedUSD
-    } else {
-      positionDailyData.totalDepositedUSD = quoteTokenToUsd(position.asset, position.totalDeposited)
-      positionDailyData.totalBorrowedUSD = quoteTokenToUsd(position.asset, position.totalBorrowed)
+  if (!dailyData) {
+    dailyData = new PositionDailyData(dailyDataId)
+    dailyData.dayStartTimestamp = dayStartTimestamp
+    dailyData.createdAt = blockTimestamp
+    dailyData.position = position.id
+  }
+
+  dailyData.pricePerShare = position.pricePerShare
+  dailyData.totalDeposited = position.totalDeposited
+  dailyData.totalBorrowed = position.totalBorrowed
+  dailyData.save()
+  return dailyData
+}
+
+/**
+ * Creates daily snapshots for all entities.
+ * - First event of day: iterates through all entities to create baseline snapshots
+ * - Subsequent events: only updates the specific position that triggered the event
+ */
+export function createDailyData(position: Position, timestamp: BigInt): void {
+  const positionRegistry = PositionRegistry.load(POSITION_REGISTRY)
+  if (!positionRegistry) return
+
+  const dayId = timestamp.div(SECONDS_PER_DAY)
+  const dayStartTimestamp = dayId.times(SECONDS_PER_DAY)
+
+  const registryDailyDataId = getDailyDataId(positionRegistry.id, dayId)
+  let registryDailyData = PositionRegistryDailyData.load(registryDailyDataId)
+
+  if (!registryDailyData) {
+    // First event of the day - create baseline snapshots for all existing entities
+    registryDailyData = saveRegistryDailyData(positionRegistry, timestamp, dayId, dayStartTimestamp)
+
+    const smartAccounts = positionRegistry.smartAccounts.load()
+    for (let i = 0; i < smartAccounts.length; i++) {
+      const smartAccount = SmartAccount.load(smartAccounts[i].id)
+      if (!smartAccount) continue
+
+      saveSmartAccountDailyData(smartAccount, timestamp, dayId, dayStartTimestamp)
+
+      const positions = smartAccount.positions.load()
+      for (let j = 0; j < positions.length; j++) {
+        const pos = Position.load(positions[j].id)
+        if (!pos) continue
+
+        savePositionDailyData(pos, timestamp, dayId, dayStartTimestamp)
+      }
     }
-    positionDailyData.position = position.id
-    positionDailyData.save()
-  }
-  return positionDailyData
-}
-
-function updateSmartAccountDailyData(
-  smartAccount: SmartAccount,
-  blockTimestamp: BigInt,
-  dayId: BigInt,
-  dayStartTimestamp: BigInt,
-): SmartAccountDailyData {
-  let saDailyData = loadOrCreateSmartAccountDailyData(smartAccount, blockTimestamp, dayId, dayStartTimestamp)
-  let totalDepositedUSD = BIG_DECIMAL_ZERO
-
-  const positions = smartAccount.positions.load()
-  for (let j = 0; j < positions.length; j++) {
-    const position = Position.load(positions[j].id)
-    if (!position) continue
-
-    const positionDailyData = updatePositionDailyData(position, blockTimestamp, dayId, dayStartTimestamp)
-    if (positionDailyData) {
-      totalDepositedUSD = totalDepositedUSD.plus(positionDailyData.totalDepositedUSD)
-    }
   }
 
-  saDailyData.totalDepositedUSD = totalDepositedUSD
-  saDailyData.save()
-  return saDailyData
-}
+  // Update registry counts (may have changed since first event - new positions etc)
+  registryDailyData.positionCount = positionRegistry.positionCount
+  registryDailyData.smartAccountCount = positionRegistry.smartAccountCount
+  registryDailyData.save()
 
-function isDailyDataUpdated(positionRegistry: PositionRegistry, dayId: BigInt, dayStartTimestamp: BigInt): boolean {
-  const dailyDataId = getDailyDataId(positionRegistry.id, dayId)
-  const dailyData = PositionRegistryDailyData.load(dailyDataId)
-
-  if (!dailyData) return false
-
-  // If data exists for this day and has been updated, return true
-  return dailyData.dayStartTimestamp == dayStartTimestamp
-}
-
-export function updateDailyData(
-  positionRegistry: PositionRegistry,
-  blockTimestamp: BigInt,
-  dayId: BigInt,
-  dayStartTimestamp: BigInt,
-): void {
-  if (isDailyDataUpdated(positionRegistry, dayId, dayStartTimestamp)) {
-    return
+  // Ensure smart account daily data exists (handles new smart account creation mid-day)
+  const sa = SmartAccount.load(position.owner)
+  if (sa) {
+    saveSmartAccountDailyData(sa, timestamp, dayId, dayStartTimestamp)
   }
 
-  let prDailyData = loadOrCreateRegistryDailyData(positionRegistry, blockTimestamp, dayId, dayStartTimestamp)
-  let totalDepositedUSD = BIG_DECIMAL_ZERO
-
-  const smartAccounts = positionRegistry.smartAccounts.load()
-  for (let i = 0; i < smartAccounts.length; i++) {
-    const smartAccount = SmartAccount.load(smartAccounts[i].id)
-    if (!smartAccount) continue
-
-    const saDailyData = updateSmartAccountDailyData(smartAccount, blockTimestamp, dayId, dayStartTimestamp)
-    totalDepositedUSD = totalDepositedUSD.plus(saDailyData.totalDepositedUSD)
-  }
-
-  prDailyData.totalDepositedUSD = totalDepositedUSD
-  prDailyData.save()
+  // Update the specific position's daily data with latest values
+  savePositionDailyData(position, timestamp, dayId, dayStartTimestamp)
 }

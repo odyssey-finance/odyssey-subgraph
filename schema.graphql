@@ -7,8 +7,6 @@ type PositionRegistry @entity {
   owner: Bytes!
   # fee collector address
   feeCollector: Bytes!
-  # total deposited in USD
-  totalDepositedUSD: BigDecimal!
   # number of positions created
   positionCount: BigInt!
   # number of smart accounts created
@@ -44,14 +42,10 @@ type Position @entity {
   totalAllocated: BigInt!
   # total assets deposited in this position.
   totalDeposited: BigInt!
-  # USD representation of totalDeposited
-  totalDepositedUSD: BigDecimal!
   # Optional: borrow token address.
   borrowToken: Bytes!
   # Optional: total assets borrowed by this position.
   totalBorrowed: BigInt!
-  # Optional: USD representation of totalBorrowed
-  totalBorrowedUSD: BigDecimal!
   # price per share
   pricePerShare: BigInt!
   # whether position implementation is outdated
@@ -80,8 +74,6 @@ type SmartAccount @entity {
   positionRegistry: PositionRegistry!
   # timestamp when data was updated
   updatedAt: BigInt!
-  # total deposited in USD
-  totalDepositedUSD: BigDecimal!
   # total position of this smart account
   positionCount: BigInt!
   # positions of this smart account
@@ -94,7 +86,6 @@ type PositionRegistryDailyData @entity {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
-  totalDepositedUSD: BigDecimal!
   positionCount: BigInt!
   smartAccountCount: BigInt!
   positionRegistry: PositionRegistry!
@@ -104,7 +95,6 @@ type SmartAccountDailyData @entity {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
-  totalDepositedUSD: BigDecimal!
   smartAccount: SmartAccount!
 }
 
@@ -113,9 +103,7 @@ type PositionDailyData @entity {
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
   totalDeposited: BigInt!
-  totalDepositedUSD: BigDecimal!
   totalBorrowed: BigInt!
-  totalBorrowedUSD: BigDecimal!
   pricePerShare: BigInt!
   position: Position!
 }

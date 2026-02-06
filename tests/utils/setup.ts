@@ -5,7 +5,6 @@ import {
   ADDRESS_ZERO,
   ASSET_ADDRESS,
   FEE_COLLECTOR_ADDRESS,
-  MASTER_ORACLE_ADDRESS,
   POSITION_ADDRESS,
   POSITION_REGISTRY_ADDRESS,
   SAFE_ADDRESS,
@@ -86,10 +85,6 @@ export function openPosition(totalAllocated: BigInt, mockPricePerShare: BigInt, 
   deployPosition()
 
   mockPositionFunctions(totalAllocated, mockPricePerShare, mockIsOutdated)
-
-  createMockedFunction(MASTER_ORACLE_ADDRESS, 'quoteTokenToUsd', 'quoteTokenToUsd(address,uint256):(uint256)')
-    .withArgs([ethereum.Value.fromAddress(ASSET_ADDRESS), ethereum.Value.fromUnsignedBigInt(totalAllocated)])
-    .returns([ethereum.Value.fromUnsignedBigInt(totalAllocated)])
 
   handlePositionOpened(createPositionOpenedEvent(ASSET_ADDRESS, totalAllocated))
 }

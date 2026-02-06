@@ -1,9 +1,8 @@
 import { Address } from '@graphprotocol/graph-ts'
-import { POSITION_REGISTRY, MASTER_ORACLE } from '../../src/utils/address'
+import { POSITION_REGISTRY } from '../../src/utils/address'
 
 export const ADDRESS_ZERO = Address.fromString('0x0000000000000000000000000000000000000000')
 export const POSITION_REGISTRY_ADDRESS = POSITION_REGISTRY
-export const MASTER_ORACLE_ADDRESS = MASTER_ORACLE
 export const SAFE_ADDRESS = Address.fromString('0x0000000000000000000000000000000000000002')
 export const FEE_COLLECTOR_ADDRESS = Address.fromString('0x0000000000000000000000000000000000000003')
 export const SMART_ACCOUNT_ADDRESS = Address.fromString('0x0000000000000000000000000000000000000004')
