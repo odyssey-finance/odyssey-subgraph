@@ -36,6 +36,7 @@ function saveSmartAccountDailyData(
   blockTimestamp: BigInt,
   dayId: BigInt,
   dayStartTimestamp: BigInt,
+  registryDailyData: PositionRegistryDailyData,
 ): SmartAccountDailyData {
   const dailyDataId = getDailyDataId(smartAccount.id, dayId)
   let dailyData = SmartAccountDailyData.load(dailyDataId)
@@ -45,6 +46,7 @@ function saveSmartAccountDailyData(
   dailyData.dayStartTimestamp = dayStartTimestamp
   dailyData.createdAt = blockTimestamp
   dailyData.smartAccount = smartAccount.id
+  dailyData.positionRegistryDailyData = registryDailyData.id
   dailyData.save()
   return dailyData
 }
@@ -54,6 +56,7 @@ function savePositionDailyData(
   blockTimestamp: BigInt,
   dayId: BigInt,
   dayStartTimestamp: BigInt,
+  smartAccountDailyData: SmartAccountDailyData,
 ): PositionDailyData {
   const dailyDataId = getDailyDataId(position.id, dayId)
   let dailyData = PositionDailyData.load(dailyDataId)
@@ -63,6 +66,7 @@ function savePositionDailyData(
     dailyData.dayStartTimestamp = dayStartTimestamp
     dailyData.createdAt = blockTimestamp
     dailyData.position = position.id
+    dailyData.smartAccountDailyData = smartAccountDailyData.id
   }
 
   dailyData.pricePerShare = position.pricePerShare
@@ -96,14 +100,20 @@ export function createDailyData(position: Position, timestamp: BigInt): void {
       const smartAccount = SmartAccount.load(smartAccounts[i].id)
       if (!smartAccount) continue
 
-      saveSmartAccountDailyData(smartAccount, timestamp, dayId, dayStartTimestamp)
+      const smartAccountDailyData = saveSmartAccountDailyData(
+        smartAccount,
+        timestamp,
+        dayId,
+        dayStartTimestamp,
+        registryDailyData,
+      )
 
       const positions = smartAccount.positions.load()
       for (let j = 0; j < positions.length; j++) {
         const pos = Position.load(positions[j].id)
         if (!pos) continue
 
-        savePositionDailyData(pos, timestamp, dayId, dayStartTimestamp)
+        savePositionDailyData(pos, timestamp, dayId, dayStartTimestamp, smartAccountDailyData)
       }
     }
   }
@@ -115,10 +125,10 @@ export function createDailyData(position: Position, timestamp: BigInt): void {
 
   // Ensure smart account daily data exists (handles new smart account creation mid-day)
   const sa = SmartAccount.load(position.owner)
-  if (sa) {
-    saveSmartAccountDailyData(sa, timestamp, dayId, dayStartTimestamp)
-  }
+  if (!sa) return
+
+  const smartAccountDailyData = saveSmartAccountDailyData(sa, timestamp, dayId, dayStartTimestamp, registryDailyData)
 
   // Update the specific position's daily data with latest values
-  savePositionDailyData(position, timestamp, dayId, dayStartTimestamp)
+  savePositionDailyData(position, timestamp, dayId, dayStartTimestamp, smartAccountDailyData)
 }

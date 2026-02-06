@@ -89,6 +89,7 @@ type PositionRegistryDailyData @entity {
   positionCount: BigInt!
   smartAccountCount: BigInt!
   positionRegistry: PositionRegistry!
+  smartAccountDailyData: [SmartAccountDailyData!]! @derivedFrom(field: "positionRegistryDailyData")
 }
 
 type SmartAccountDailyData @entity {
@@ -96,6 +97,8 @@ type SmartAccountDailyData @entity {
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
   smartAccount: SmartAccount!
+  positionRegistryDailyData: PositionRegistryDailyData!
+  positionDailyData: [PositionDailyData!]! @derivedFrom(field: "smartAccountDailyData")
 }
 
 type PositionDailyData @entity {
@@ -106,4 +109,5 @@ type PositionDailyData @entity {
   totalBorrowed: BigInt!
   pricePerShare: BigInt!
   position: Position!
+  smartAccountDailyData: SmartAccountDailyData!
 }
