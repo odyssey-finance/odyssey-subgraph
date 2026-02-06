@@ -2,7 +2,7 @@ import { PositionOpened, PositionClosed, FeatureCalled } from '../../generated/t
 import { Position } from '../../generated/schema'
 import { BIG_INT_ONE } from '../utils/constants'
 import { PositionInfo } from '../utils/position-info'
-import { createDailyData } from '../processor/daily-data-processor'
+import { createSnapshot } from '../processor/snapshot-processor'
 
 export function handlePositionOpened(event: PositionOpened): void {
   const position = Position.load(event.address)!
@@ -21,7 +21,7 @@ export function handlePositionOpened(event: PositionOpened): void {
 
   position.save()
 
-  createDailyData(position, event.block.timestamp)
+  createSnapshot(position, event.block.timestamp)
 }
 
 export function handlePositionClosed(event: PositionClosed): void {
@@ -39,7 +39,7 @@ export function handlePositionClosed(event: PositionClosed): void {
 
   position.save()
 
-  createDailyData(position, event.block.timestamp)
+  createSnapshot(position, event.block.timestamp)
 }
 
 export function handleFeatureCalled(event: FeatureCalled): void {
@@ -55,5 +55,5 @@ export function handleFeatureCalled(event: FeatureCalled): void {
   position.updatedAt = event.block.timestamp
   position.save()
 
-  createDailyData(position, event.block.timestamp)
+  createSnapshot(position, event.block.timestamp)
 }

@@ -15,8 +15,8 @@ type PositionRegistry @entity {
   smartAccounts: [SmartAccount!]! @derivedFrom(field: "positionRegistry")
   # strategies
   strategies: [Strategy!]! @derivedFrom(field: "positionRegistry")
-  # daily snapshot of data
-  dailyData: [PositionRegistryDailyData!]! @derivedFrom(field: "positionRegistry")
+  # daily snapshots
+  snapshots: [PositionRegistrySnapshot!]! @derivedFrom(field: "positionRegistry")
 }
 
 type Position @entity {
@@ -50,8 +50,8 @@ type Position @entity {
   pricePerShare: BigInt!
   # whether position implementation is outdated
   isOutdated: Boolean!
-  # daily snapshot of data
-  dailyData: [PositionDailyData!]! @derivedFrom(field: "position")
+  # daily snapshots
+  snapshots: [PositionSnapshot!]! @derivedFrom(field: "position")
 }
 
 type Strategy @entity {
@@ -78,30 +78,30 @@ type SmartAccount @entity {
   positionCount: BigInt!
   # positions of this smart account
   positions: [Position!]! @derivedFrom(field: "owner")
-  # daily snapshot of smart account data
-  dailyData: [SmartAccountDailyData!]! @derivedFrom(field: "smartAccount")
+  # daily snapshots
+  snapshots: [SmartAccountSnapshot!]! @derivedFrom(field: "smartAccount")
 }
 
-type PositionRegistryDailyData @entity {
+type PositionRegistrySnapshot @entity {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
   positionCount: BigInt!
   smartAccountCount: BigInt!
   positionRegistry: PositionRegistry!
-  smartAccountDailyData: [SmartAccountDailyData!]! @derivedFrom(field: "positionRegistryDailyData")
+  smartAccountSnapshots: [SmartAccountSnapshot!]! @derivedFrom(field: "positionRegistrySnapshot")
 }
 
-type SmartAccountDailyData @entity {
+type SmartAccountSnapshot @entity {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
   smartAccount: SmartAccount!
-  positionRegistryDailyData: PositionRegistryDailyData!
-  positionDailyData: [PositionDailyData!]! @derivedFrom(field: "smartAccountDailyData")
+  positionRegistrySnapshot: PositionRegistrySnapshot!
+  positionSnapshots: [PositionSnapshot!]! @derivedFrom(field: "smartAccountSnapshot")
 }
 
-type PositionDailyData @entity {
+type PositionSnapshot @entity {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
@@ -109,5 +109,5 @@ type PositionDailyData @entity {
   totalBorrowed: BigInt!
   pricePerShare: BigInt!
   position: Position!
-  smartAccountDailyData: SmartAccountDailyData!
+  smartAccountSnapshot: SmartAccountSnapshot!
 }
