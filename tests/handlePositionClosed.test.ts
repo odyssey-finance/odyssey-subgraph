@@ -1,10 +1,10 @@
 import { newMockEvent } from 'matchstick-as'
 import { assert, describe, test, clearStore, afterAll } from 'matchstick-as/assembly/index'
 import { ethereum, Address, BigInt } from '@graphprotocol/graph-ts'
-import { ADDRESS_ZERO, ASSET_ADDRESS, POSITION_ADDRESS } from './utils/addresses'
+import { ASSET_ADDRESS, POSITION_ADDRESS } from './utils/addresses'
 import { PositionClosed } from '../generated/templates/Position/Position'
 import { handlePositionClosed } from '../src/mappings/position'
-import { openPosition } from './utils/setup'
+import { mockPositionFunctions, openPosition } from './utils/setup'
 
 function createPositionClosedEvent(asset: Address, totalAllocated: BigInt): PositionClosed {
   const event = changetype<PositionClosed>(newMockEvent())
@@ -18,6 +18,10 @@ function createPositionClosedEvent(asset: Address, totalAllocated: BigInt): Posi
 
 function positionClosedEvent(): void {
   const totalAllocated = BigInt.fromI32(0)
+  const pricePerShare = BigInt.fromI32(1)
+  const isOutdated = false
+  mockPositionFunctions(totalAllocated, pricePerShare, isOutdated)
+
   const positionClosedEvent = createPositionClosedEvent(ASSET_ADDRESS, totalAllocated)
   handlePositionClosed(positionClosedEvent)
 }
@@ -36,11 +40,12 @@ describe('Position: PositionClosed event', () => {
     positionClosedEvent()
 
     assert.entityCount(entityType, 1)
-    assert.fieldEquals(entityType, id, 'asset', ADDRESS_ZERO.toHex())
+    assert.fieldEquals(entityType, id, 'asset', ASSET_ADDRESS.toHex())
     assert.fieldEquals(entityType, id, 'totalAllocated', '0')
-    assert.fieldEquals(entityType, id, 'isOutdated', mockIsOutdated.toString())
-    assert.fieldEquals(entityType, id, 'pricePerShare', '0')
-    assert.fieldEquals(entityType, id, 'txCount', '0')
+    assert.fieldEquals(entityType, id, 'totalDeposited', '0')
+    assert.fieldEquals(entityType, id, 'totalBorrowed', '0')
+    assert.fieldEquals(entityType, id, 'pricePerShare', '1')
+    assert.fieldEquals(entityType, id, 'isOutdated', 'false')
     assert.fieldEquals(entityType, id, 'openedAt', '1')
   })
 })

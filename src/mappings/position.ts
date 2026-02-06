@@ -1,6 +1,6 @@
 import { PositionOpened, PositionClosed, FeatureCalled } from '../../generated/templates/Position/Position'
 import { Position } from '../../generated/schema'
-import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { BIG_INT_ONE } from '../utils/constants'
 import { PositionInfo } from '../utils/position-info'
 import { createDailyData } from '../processor/daily-data-processor'
 
@@ -8,7 +8,6 @@ export function handlePositionOpened(event: PositionOpened): void {
   const position = Position.load(event.address)!
   position.openedAt = event.block.timestamp
   position.updatedAt = position.openedAt
-  position.closedAt = BIG_INT_ZERO // in case we are reusing position
   position.txCount = position.txCount.plus(BIG_INT_ONE)
   position.totalAllocated = event.params.pushed
   position.asset = event.params.asset
@@ -30,14 +29,12 @@ export function handlePositionClosed(event: PositionClosed): void {
   position.totalAllocated = event.params.pulled
   position.closedAt = event.block.timestamp
   position.updatedAt = position.closedAt
-  position.txCount = BIG_INT_ZERO
-  position.asset = ADDRESS_ZERO
-  position.borrowToken = ADDRESS_ZERO
-  position.pricePerShare = BIG_INT_ZERO
-  position.totalDeposited = BIG_INT_ZERO
-  position.totalBorrowed = BIG_INT_ZERO
+  position.txCount = position.txCount.plus(BIG_INT_ONE)
 
   const info = new PositionInfo(event.address)
+  position.pricePerShare = info.pricePerShare()
+  position.totalDeposited = info.totalDeposited()
+  position.totalBorrowed = info.totalBorrowed()
   position.isOutdated = info.isOutdated()
 
   position.save()
