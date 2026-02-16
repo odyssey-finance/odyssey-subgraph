@@ -3,16 +3,16 @@ import { assert, describe, test, clearStore, afterAll } from 'matchstick-as/asse
 import { BigInt } from '@graphprotocol/graph-ts'
 import { POSITION_ADDRESS } from './utils/addresses'
 import { openPosition } from './utils/setup'
-import { createDailyData } from '../src/processor/daily-data-processor'
+import { createSnapshot } from '../src/processor/snapshot-processor'
 import { Position } from '../generated/schema'
 
-describe('Daily Data: polling block handler', () => {
+describe('Snapshot: polling block handler', () => {
   afterAll(() => {
     clearStore()
   })
 
-  test('Handle daily data', () => {
-    const entityType = 'PositionDailyData'
+  test('Handle snapshot', () => {
+    const entityType = 'PositionSnapshot'
     // positionAddress-dayId. for tests it is '0x0000000000000000000000000000000000000005-0'
     const id = POSITION_ADDRESS.toHex().concat('-0')
 
@@ -22,7 +22,7 @@ describe('Daily Data: polling block handler', () => {
     openPosition(totalAllocated, pricePerShare, isOutdated)
 
     const position = Position.load(POSITION_ADDRESS)!
-    createDailyData(position, newMockEvent().block.timestamp)
+    createSnapshot(position, newMockEvent().block.timestamp)
 
     assert.entityCount(entityType, 1)
     // given borrow is zero, totalDeposited is same as totalAllocated for this test.
