@@ -15,6 +15,7 @@ import { PositionInfo } from '../utils/position-info'
 function refreshPositionValues(position: Position): void {
   const info = new PositionInfo(Address.fromBytes(position.id))
   position.pricePerShare = info.pricePerShare()
+  position.totalAllocated = info.totalAllocated()
   position.totalDeposited = info.totalDeposited()
   position.totalBorrowed = info.totalBorrowed()
   position.save()
@@ -80,6 +81,7 @@ function savePositionSnapshot(
   }
 
   snapshot.pricePerShare = position.pricePerShare
+  snapshot.totalAllocated = position.totalAllocated
   snapshot.totalDeposited = position.totalDeposited
   snapshot.totalBorrowed = position.totalBorrowed
   snapshot.save()

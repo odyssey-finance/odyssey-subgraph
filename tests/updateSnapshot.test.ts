@@ -29,6 +29,7 @@ describe('Snapshot: polling block handler', () => {
 
     assert.entityCount(entityType, 1)
     // given borrow is zero, totalDeposited is same as totalAllocated for this test.
+    assert.fieldEquals(entityType, id, 'totalAllocated', totalAllocated.toString())
     assert.fieldEquals(entityType, id, 'totalDeposited', totalAllocated.toString())
     assert.fieldEquals(entityType, id, 'pricePerShare', pricePerShare.toString())
   })
@@ -43,6 +44,9 @@ describe('Snapshot: polling block handler', () => {
     // Simulate on-chain drift: contract returns a new pricePerShare but no event has fired for A.
     createMockedFunction(POSITION_ADDRESS, 'pricePerShare', 'pricePerShare():(uint256)').returns([
       ethereum.Value.fromUnsignedBigInt(freshPrice),
+    ])
+    createMockedFunction(POSITION_ADDRESS, 'totalAllocated', 'totalAllocated():(uint256)').returns([
+      ethereum.Value.fromUnsignedBigInt(allocated),
     ])
     createMockedFunction(POSITION_ADDRESS, 'depositedAmount', 'depositedAmount():(uint256)').returns([
       ethereum.Value.fromUnsignedBigInt(allocated),
