@@ -27,6 +27,8 @@ dataSources:
       abis:
         - name: PositionRegistry
           file: ./abis/PositionRegistry.json
+        - name: Position
+          file: ./abis/Position.json
       eventHandlers:
         - event: StrategyAdded(indexed uint256,indexed address,indexed address)
           handler: handleStrategyAdded
