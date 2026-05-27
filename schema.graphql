@@ -1,4 +1,4 @@
-type PositionRegistry @entity {
+type PositionRegistry @entity(immutable: false) {
   # position registry address
   id: Bytes!
   # timestamp when data was updated
@@ -19,7 +19,7 @@ type PositionRegistry @entity {
   snapshots: [PositionRegistrySnapshot!]! @derivedFrom(field: "positionRegistry")
 }
 
-type Position @entity {
+type Position @entity(immutable: false) {
   # position address
   id: Bytes!
   # owner of position (i.e. smart account)
@@ -54,7 +54,7 @@ type Position @entity {
   snapshots: [PositionSnapshot!]! @derivedFrom(field: "position")
 }
 
-type Strategy @entity {
+type Strategy @entity(immutable: false) {
   # strategy id, stored on-chain as strategyId.
   id: String!
   # position registry address
@@ -67,7 +67,7 @@ type Strategy @entity {
   isActive: Boolean!
 }
 
-type SmartAccount @entity {
+type SmartAccount @entity(immutable: false) {
   # smart account address
   id: Bytes!
   # position registry address
@@ -82,7 +82,7 @@ type SmartAccount @entity {
   snapshots: [SmartAccountSnapshot!]! @derivedFrom(field: "smartAccount")
 }
 
-type PositionRegistrySnapshot @entity {
+type PositionRegistrySnapshot @entity(immutable: false) {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
@@ -92,7 +92,7 @@ type PositionRegistrySnapshot @entity {
   smartAccountSnapshots: [SmartAccountSnapshot!]! @derivedFrom(field: "positionRegistrySnapshot")
 }
 
-type SmartAccountSnapshot @entity {
+type SmartAccountSnapshot @entity(immutable: false) {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!
@@ -101,7 +101,7 @@ type SmartAccountSnapshot @entity {
   positionSnapshots: [PositionSnapshot!]! @derivedFrom(field: "smartAccountSnapshot")
 }
 
-type PositionSnapshot @entity {
+type PositionSnapshot @entity(immutable: false) {
   id: String!
   dayStartTimestamp: BigInt!
   createdAt: BigInt!

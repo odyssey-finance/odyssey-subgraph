@@ -1,4 +1,4 @@
-import { Bytes, BigInt } from '@graphprotocol/graph-ts'
+import { Address, Bytes, BigInt } from '@graphprotocol/graph-ts'
 import {
   Position,
   PositionSnapshot,
@@ -8,7 +8,17 @@ import {
   SmartAccountSnapshot,
 } from '../../generated/schema'
 import { POSITION_REGISTRY } from '../utils/address'
-import { SECONDS_PER_DAY } from '../utils/constants'
+import { BIG_INT_ZERO, SECONDS_PER_DAY } from '../utils/constants'
+import { PositionInfo } from '../utils/position-info'
+
+// Fetches on-chain values that the Position entity caches.
+function refreshPositionValues(position: Position): void {
+  const info = new PositionInfo(Address.fromBytes(position.id))
+  position.pricePerShare = info.pricePerShare()
+  position.totalDeposited = info.totalDeposited()
+  position.totalBorrowed = info.totalBorrowed()
+  position.save()
+}
 
 function getSnapshotId(entityId: Bytes, dayId: BigInt): string {
   return entityId.toHex().concat('-').concat(dayId.toString())
@@ -112,7 +122,12 @@ export function createSnapshot(position: Position, timestamp: BigInt): void {
       for (let j = 0; j < positions.length; j++) {
         const pos = Position.load(positions[j].id)
         if (!pos) continue
+        // Triggering position is refreshed by the event handler and snapshotted below
+        if (pos.id.equals(position.id)) continue
+        // Closed positions have a frozen on-chain pricePerShare — skip the eth_calls
+        if (pos.closedAt.gt(BIG_INT_ZERO)) continue
 
+        refreshPositionValues(pos)
         savePositionSnapshot(pos, timestamp, dayId, dayStartTimestamp, smartAccountSnapshot)
       }
     }
