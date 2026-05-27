@@ -1,5 +1,6 @@
 {
     "network": "base",
     "positionRegistry": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
-    "startBlock": 25696510
+    "startBlock": 25696510,
+    "pollingInterval": 21600
 }

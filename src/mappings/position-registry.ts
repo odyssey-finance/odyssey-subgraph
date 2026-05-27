@@ -1,4 +1,4 @@
-import { Address, BigInt } from '@graphprotocol/graph-ts'
+import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import {
   OwnershipTransferred,
   PositionDeployed as PositionDeployedEvent,
@@ -12,6 +12,7 @@ import {
 import { PositionRegistry, Position, Strategy, SmartAccount } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
 import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { createSnapshot } from '../processor/snapshot-processor'
 
 function loadOrCreateSmartAccount(id: Address, timestamp: BigInt): SmartAccount {
   let smartAccount = SmartAccount.load(id)
@@ -118,4 +119,9 @@ export function handleFeeCollectorUpdated(event: FeeCollectorUpdated): void {
   positionRegistry.feeCollector = event.params.newFeeCollector
   positionRegistry.updatedAt = event.block.timestamp
   positionRegistry.save()
+}
+
+// Polling block handler: ensures a daily snapshot exists even on days with no Position events.
+export function handleBlock(block: ethereum.Block): void {
+  createSnapshot(block.timestamp, null)
 }

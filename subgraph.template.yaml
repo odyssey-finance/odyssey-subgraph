@@ -21,9 +21,9 @@ dataSources:
         - Position
         - Strategy
         - SmartAccount
-        - PositionDailyData
-        - PositionRegistryDailyData
-        - SmartAccountDailyData
+        - PositionSnapshot
+        - PositionRegistrySnapshot
+        - SmartAccountSnapshot
       abis:
         - name: PositionRegistry
           file: ./abis/PositionRegistry.json
@@ -42,6 +42,11 @@ dataSources:
           handler: handleImplementationUpdated
         - event: FeeCollectorUpdated(indexed address,indexed address)
           handler: handleFeeCollectorUpdated
+      blockHandlers:
+        - handler: handleBlock
+          filter:
+            kind: polling
+            every: {{pollingInterval}}
 templates:
   - kind: ethereum/contract
     name: Position
@@ -55,6 +60,11 @@ templates:
       file: ./src/mappings/position.ts
       entities:
         - Position
+        - PositionRegistry
+        - SmartAccount
+        - PositionSnapshot
+        - PositionRegistrySnapshot
+        - SmartAccountSnapshot
       abis:
         - name: Position
           file: ./abis/Position.json
