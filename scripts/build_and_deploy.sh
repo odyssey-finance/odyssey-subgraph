@@ -2,6 +2,9 @@
 
 set -e
 
+# Use locally-installed CLIs (graph, mustache, goldsky) from node_modules
+export PATH="$PWD/node_modules/.bin:$PATH"
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
