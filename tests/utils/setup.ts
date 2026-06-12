@@ -1,5 +1,9 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
-import { OwnershipTransferred, PositionDeployed } from '../../generated/PositionRegistry/PositionRegistry'
+import {
+  ImplementationUpdated,
+  OwnershipTransferred,
+  PositionDeployed,
+} from '../../generated/PositionRegistry/PositionRegistry'
 import { createMockedFunction, newMockEvent } from 'matchstick-as'
 import {
   ADDRESS_ZERO,
@@ -22,6 +26,17 @@ export function createPositionDeployedEvent(owner: Address, strategyId: BigInt, 
   event.parameters.push(new ethereum.EventParam('owner', ethereum.Value.fromAddress(owner)))
   event.parameters.push(new ethereum.EventParam('strategyId', ethereum.Value.fromUnsignedBigInt(strategyId)))
   event.parameters.push(new ethereum.EventParam('position', ethereum.Value.fromAddress(position)))
+
+  event.address = POSITION_REGISTRY_ADDRESS
+  return event
+}
+
+export function createImplementationUpdatedEvent(strategyId: BigInt, newImplementation: Address): ImplementationUpdated {
+  const event = changetype<ImplementationUpdated>(newMockEvent())
+
+  event.parameters = new Array()
+  event.parameters.push(new ethereum.EventParam('strategyId', ethereum.Value.fromUnsignedBigInt(strategyId)))
+  event.parameters.push(new ethereum.EventParam('newImplementation', ethereum.Value.fromAddress(newImplementation)))
 
   event.address = POSITION_REGISTRY_ADDRESS
   return event

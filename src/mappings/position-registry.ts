@@ -1,4 +1,4 @@
-import { Address, BigInt } from '@graphprotocol/graph-ts'
+import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import {
   OwnershipTransferred,
   PositionDeployed as PositionDeployedEvent,
@@ -12,6 +12,8 @@ import {
 import { PositionRegistry, Position, Strategy, SmartAccount } from '../../generated/schema'
 import { Position as PositionTemplate } from '../../generated/templates'
 import { ADDRESS_ZERO, BIG_INT_ONE, BIG_INT_ZERO } from '../utils/constants'
+import { createSnapshot } from '../processor/snapshot-processor'
+import { PositionInfo } from '../utils/position-info'
 
 function loadOrCreateSmartAccount(id: Address, timestamp: BigInt): SmartAccount {
   let smartAccount = SmartAccount.load(id)
@@ -96,6 +98,23 @@ export function handleImplementationUpdated(event: ImplementationUpdated): void 
   const strategy = Strategy.load(event.params.strategyId.toString())!
   strategy.implementation = event.params.newImplementation
   strategy.save()
+
+  // updated isOutdated flag when the strategy's implementation changes.
+  const registry = PositionRegistry.load(event.address)!
+  const smartAccounts = registry.smartAccounts.load()
+  for (let i = 0; i < smartAccounts.length; i++) {
+    const positions = smartAccounts[i].positions.load()
+    for (let j = 0; j < positions.length; j++) {
+      const position = positions[j]
+      if (!position.strategyId.equals(event.params.strategyId)) continue
+      if (position.closedAt.gt(BIG_INT_ZERO)) continue
+
+      const info = new PositionInfo(Address.fromBytes(position.id))
+      position.isOutdated = info.isOutdated()
+      position.updatedAt = event.block.timestamp
+      position.save()
+    }
+  }
 }
 
 // This handler will create PositionRegistry entity and also update owner.
@@ -118,4 +137,9 @@ export function handleFeeCollectorUpdated(event: FeeCollectorUpdated): void {
   positionRegistry.feeCollector = event.params.newFeeCollector
   positionRegistry.updatedAt = event.block.timestamp
   positionRegistry.save()
+}
+
+// Polling block handler: ensures a daily snapshot exists even on days with no Position events.
+export function handleBlock(block: ethereum.Block): void {
+  createSnapshot(block.timestamp, null)
 }

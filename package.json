@@ -1,6 +1,6 @@
 {
   "name": "odyssey-subgraph",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "repository": "https://github.com/graphprotocol/odyssey-subgraph",
   "license": "MIT",
   "scripts": {
@@ -9,17 +9,21 @@
     "deploy": "bash scripts/build_and_deploy.sh --deploy",
     "test": "graph test -d"
   },
+  "engines": {
+    "node": ">=24"
+  },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.96.0",
-    "@graphprotocol/graph-ts": "0.38.1",
-    "@types/node": "22.15.32",
-    "@typescript-eslint/eslint-plugin": "^8.20.0",
-    "@typescript-eslint/parser": "^8.20.0",
-    "eslint": "^9.18.0",
-    "eslint-config-prettier": "^10.0.1",
+    "@goldskycom/cli": "^13.3.4",
+    "@graphprotocol/graph-cli": "^0.98.1",
+    "@graphprotocol/graph-ts": "0.38.2",
+    "@types/node": "^24.12.4",
+    "@typescript-eslint/eslint-plugin": "^8.60.0",
+    "@typescript-eslint/parser": "^8.60.0",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
     "matchstick-as": "^0.6.0",
     "mustache": "^4.2.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.3"
+    "prettier": "^3.8.3",
+    "typescript": "^5.9.3"
   }
 }

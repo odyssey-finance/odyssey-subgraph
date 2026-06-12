@@ -1,5 +1,6 @@
 {
     "network": "optimism",
     "positionRegistry": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
-    "startBlock": 131291973
+    "startBlock": 131291973,
+    "pollingInterval": 21600
 }

@@ -1,4 +1,4 @@
-import { Bytes, BigInt } from '@graphprotocol/graph-ts'
+import { Address, Bytes, BigInt } from '@graphprotocol/graph-ts'
 import {
   Position,
   PositionSnapshot,
@@ -8,7 +8,18 @@ import {
   SmartAccountSnapshot,
 } from '../../generated/schema'
 import { POSITION_REGISTRY } from '../utils/address'
-import { SECONDS_PER_DAY } from '../utils/constants'
+import { BIG_INT_ZERO, SECONDS_PER_DAY } from '../utils/constants'
+import { PositionInfo } from '../utils/position-info'
+
+// Fetches on-chain values that the Position entity caches.
+function refreshPositionValues(position: Position): void {
+  const info = new PositionInfo(Address.fromBytes(position.id))
+  position.pricePerShare = info.pricePerShare()
+  position.totalAllocated = info.totalAllocated()
+  position.totalDeposited = info.totalDeposited()
+  position.totalBorrowed = info.totalBorrowed()
+  position.save()
+}
 
 function getSnapshotId(entityId: Bytes, dayId: BigInt): string {
   return entityId.toHex().concat('-').concat(dayId.toString())
@@ -70,6 +81,7 @@ function savePositionSnapshot(
   }
 
   snapshot.pricePerShare = position.pricePerShare
+  snapshot.totalAllocated = position.totalAllocated
   snapshot.totalDeposited = position.totalDeposited
   snapshot.totalBorrowed = position.totalBorrowed
   snapshot.save()
@@ -80,8 +92,9 @@ function savePositionSnapshot(
  * Creates daily snapshots for all entities.
  * - First event of day: iterates through all entities to create baseline snapshots
  * - Subsequent events: only updates the specific position that triggered the event
+ * Pass position=null for registry-level events that don't tie to a single position.
  */
-export function createSnapshot(position: Position, timestamp: BigInt): void {
+export function createSnapshot(timestamp: BigInt, position: Position | null): void {
   const positionRegistry = PositionRegistry.load(POSITION_REGISTRY)
   if (!positionRegistry) return
 
@@ -112,7 +125,14 @@ export function createSnapshot(position: Position, timestamp: BigInt): void {
       for (let j = 0; j < positions.length; j++) {
         const pos = Position.load(positions[j].id)
         if (!pos) continue
+        // Triggering position is refreshed by the event handler and snapshotted below
+        if (position !== null && pos.id.equals(position.id)) continue
+        // Unopened position has no meaningful state to snapshot
+        if (pos.openedAt.equals(BIG_INT_ZERO)) continue
+        // Closed positions have a frozen on-chain pricePerShare — skip the eth_calls
+        if (pos.closedAt.gt(BIG_INT_ZERO)) continue
 
+        refreshPositionValues(pos)
         savePositionSnapshot(pos, timestamp, dayId, dayStartTimestamp, smartAccountSnapshot)
       }
     }
@@ -122,6 +142,8 @@ export function createSnapshot(position: Position, timestamp: BigInt): void {
   registrySnapshot.positionCount = positionRegistry.positionCount
   registrySnapshot.smartAccountCount = positionRegistry.smartAccountCount
   registrySnapshot.save()
+
+  if (position === null) return
 
   // Ensure smart account entity exists before creating snapshot (handles mid-day creation)
   const sa = SmartAccount.load(position.owner)

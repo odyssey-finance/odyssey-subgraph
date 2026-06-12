@@ -21,7 +21,7 @@ export function handlePositionOpened(event: PositionOpened): void {
 
   position.save()
 
-  createSnapshot(position, event.block.timestamp)
+  createSnapshot(event.block.timestamp, position)
 }
 
 export function handlePositionClosed(event: PositionClosed): void {
@@ -39,7 +39,7 @@ export function handlePositionClosed(event: PositionClosed): void {
 
   position.save()
 
-  createSnapshot(position, event.block.timestamp)
+  createSnapshot(event.block.timestamp, position)
 }
 
 export function handleFeatureCalled(event: FeatureCalled): void {
@@ -55,5 +55,5 @@ export function handleFeatureCalled(event: FeatureCalled): void {
   position.updatedAt = event.block.timestamp
   position.save()
 
-  createSnapshot(position, event.block.timestamp)
+  createSnapshot(event.block.timestamp, position)
 }
