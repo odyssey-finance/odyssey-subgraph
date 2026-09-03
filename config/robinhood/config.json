@@ -1,0 +1,7 @@
+{
+    "_comment": "Network is set to 'robinhood-mainnet'. NOTE: for the rest of the project we use the 'robinhood' as network",
+    "network": "robinhood-mainnet",
+    "positionRegistry": "0xeE156D8ea7b96a5524CcC3CF9283ab85E80E9534",
+    "startBlock": 41788270,
+    "pollingInterval": 432000
+}

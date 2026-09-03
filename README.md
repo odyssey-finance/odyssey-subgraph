@@ -11,7 +11,7 @@ Below command will automatically generate the `subgraph.yaml` file and build the
 * `yarn build --network <networkName>`
   For example: `yarn build --network ethereum`
 
-> Supported networks: `base`, `ethereum`, `optimism`, and `plasma`.
+> Supported networks: `base`, `ethereum`, `optimism`, `plasma`, and `robinhood`.
 
 ## Deploy
 Follow deployment guide [here](https://thegraph.com/docs/en/subgraphs/developing/deploying/using-subgraph-studio/) to understand the process of deployment.
@@ -24,3 +24,5 @@ Follow deployment guide [here](https://thegraph.com/docs/en/subgraphs/developing
 - `yarn deploy --network <networkName>` will build and deploy subgraph for given network.
 
 > Deploy command is going to ask subgraph name. As a rule of thumb you should follow "odyssey-subgraph-${networkName}" pattern for subgraph name.
+
+> `plasma` and `robinhood` deploy to GoldSky instead, since TheGraph has no subgraph indexer for them. Auth with `yarn goldsky login` and the script routes them automatically.
