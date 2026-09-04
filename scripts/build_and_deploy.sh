@@ -66,6 +66,9 @@ else
     SUBGRAPH_NAME="odyssey-subgraph-${NETWORK}"
 fi
 
+# Networks TheGraph has no subgraph indexer for; deployed via GoldSky instead
+GOLDSKY_NETWORKS=("plasma" "robinhood")
+
 # Dynamically get valid networks from config directory
 VALID_NETWORKS=($(ls -1 config | grep -v '^[.]*$'))
 if [[ ! " ${VALID_NETWORKS[@]} " =~ " $NETWORK " ]]; then
@@ -93,7 +96,7 @@ graph codegen
 
 # deploy subgraph
 if [[ "$DEPLOY_FLAG" == "--deploy" ]]; then
-    if [[ "$NETWORK" == "plasma" ]]; then
+    if [[ " ${GOLDSKY_NETWORKS[@]} " =~ " $NETWORK " ]]; then
         # build
         graph build
         # deploy
